@@ -1,0 +1,59 @@
+# Docker Compose file to launch a local Drupal develpment cluster with an
+# existing project.
+
+version: '3'
+
+services: 
+  mysql:
+    build: ./mysql
+    env_file:
+      - ./mysql/resources/mysql.env
+    ports:
+      - "0.0.0.0:3306:3306"
+    volumes:
+      - ./mysql/resources/init:/docker-entrypoint-initdb.d
+      - mysql-data:/var/lib/mysql
+    # See https://www.drupal.org/project/drupal/issues/2966523
+    command: --default-authentication-plugin=mysql_native_password
+
+  drupal:
+    build: ./drupal
+    env_file:
+      - ./mysql/resources/mysql.env
+      - ./drupal/resources/drupal.env
+    depends_on:
+      - mysql
+    volumes:
+        - html:/var/www/html
+        - ./${SITE}/core:/var/www/html/core
+        - ./${SITE}/modules:/var/www/html/modules
+        - ./${SITE}/profiles:/var/www/html/profiles
+        - ./${SITE}/themes:/var/www/html/themes
+        - ./${SITE}/sites:/var/www/html/sites
+        # - ./drupal/resources/settings.php:/var/www/html/sites/default/settings.php
+    expose:
+      - 9000
+
+  nginx:
+    build: ./nginx
+    env_file:
+      - ./nginx/resources/nginx.env
+    depends_on:
+      - mysql
+      - drupal
+    ports:
+      - "0.0.0.0:8080:80"
+    volumes:
+      - html:/var/www/html:ro
+      - ./${SITE}/core:/var/www/html/core:ro
+      - ./${SITE}/modules:/var/www/html/modules:ro
+      - ./${SITE}/profiles:/var/www/html/profiles:ro
+      - ./${SITE}/themes:/var/www/html/themes:ro
+      - ./${SITE}/sites:/var/www/html/sites:ro
+      #- ./drupal/resources/settings.php:/var/www/html/sites/default/settings.php
+      - ./nginx/resources/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  html:
+  mysql-data:
+  
