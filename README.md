@@ -18,7 +18,6 @@ database container, a Drupal 8 container and a NGINX web server container.
   * [Drupal](#drupal)
   * [MySQL](#mysql)
     * [Importing a Database Dump](#importing-a-database-dump)
-    * [Creating a new Drupal Database](#creating-a-new-drupal-database)
 * [Using the Development Environment](#using-the-development-environment)
   * [Which docker-compose.yml should I use?](#which-docker-compose.yml-should-i-use?)
   * [Using the Vanilla Drupal Development Environment](#using-the-vanilla-drupal-development-environment)
@@ -132,7 +131,13 @@ The NGINX server block for the Drupal application may be viewed in the
 ## Drupal
 
 The environment variables set in the Drupal container may be viewed in the 
-[drupal.env](drupal/resources/nginx.env) file.
+[drupal.env](drupal/resources/drupal.env) file.
+
+When the Drupal container is built, it will copy in a custom [composer.json](drupal/resources/composer.json)
+that will include all of the public modules required in the development environment.
+Additionally, a [shell script](drupal/resources/enable_modules.sh) will be copied
+into the container which may be used to easily enable all of these modules once
+the Drupal instance is up and running.
 
 ## MySQL
 
@@ -156,20 +161,6 @@ The database dump will only be imported during a fresh deployment of the MySQL
 container. Please see [Starting a Fresh Environment](#starting-a-fresh-environment)
 for more information on how to build a fresh MySQL container.
 
-### Creating a new Drupal Database
-
-If no database dump is available, a fresh Drupal database may be created by 
-following the Drupal installation guide.
-
-On the "Set up database" step of the Drupal installation, input the Drupal database
-name, user and password as defined in [mysql.env](mysql/resources/mysql.env). The
-database name should be the value of `MYSQL_DATABASE`, the user should be the 
-value of `MYSQL_USER` and the password should be the value of `MYSQL_PASSWORD`.
-Under advanced options, set the "Host" option to `mysql` to match the name of 
-the MySQL service.
-
-![Drupal Database Setup](img/drupal_db_setup.png "Drupal Database Setup")
-
 # Using the Development Environment
 
 ## Which docker-compose.yml should I use?
@@ -192,7 +183,7 @@ when you invoke `docker-compose` so that the vanilla docker-compose.yml is targe
 The vanilla Drupal 8 Docker development cluster may be started via `docker-compose`.
 
 ```bash
-# Execute in the top level directory where docker-compose.yml is.
+# Execute in the top level directory where docker-compose.vanilla.yml is.
 $ docker-compose -f docker-compose.vanilla.yml up -d --build
 ```
 
@@ -201,6 +192,40 @@ an NGINX web server frontend container.
 
 Once completed, Drupal may be accessed at `http://localhost:8080/index.php`.  
 The MySQL database will be available at `localhost:3306`.
+
+### Initial Setup
+
+If you are deploying the Drupal 8 Docker development environment for the first
+time, there are a few initial setup steps the must be completed.
+
+1. Once the Drupal container is up, navigate to `http://localhost:8080/index.php`
+   and go through the guided Drupal 8 installation. Select the "Standard" installation
+   profile on the "Choose Profile" tab.
+2. On the "Set up database" tab, select "MySQL, MariaDB, Percona Server, or equivalent"
+   as the database type. For the fields, use the values in [mysql.env](mysql/resources/mysql.env).
+   The database name should be the value of  `MYSQL_DATABASE`, the database username
+   should be the value of `MYSQL_USER` and  the database password should be the
+   value of `MYSQL_PASSWORD`. Under advanced options, set the "Host" option to `mysql`
+   to match the name of the MySQL service.
+
+   ![Drupal Database Setup](img/drupal_db_setup.png "Drupal Database Setup")
+
+3. Enter whatver values you wish on the "Configure site" tab.
+4. Once the Drupal installation wizard is complete, you will need to enable all
+   of the public modules installed previously during the build of the Drupal
+   container. This can be done by running the enable_modules.sh script via
+   `docker exec`.
+   ```bash
+   # Find the ID of the Drupal container.
+   $ docker ps -qf "ancestor=drupal-8-docker-dev_drupal"
+   0ac1284fca93
+
+   # Run enable_modules.sh within the Drupal container
+   $ docker exec 0ac1284fca93 ./enable_modules.sh
+   ```
+5. Once this script completes, refresh your browser and you should see that
+   the Bootstrap theme has become active an all of the third party modules are
+   now enabled. You are now ready to use the Drupal environment.
 
 ### Stopping the Development Environment
 
@@ -247,8 +272,11 @@ removing the persistent volumes.
 $ docker-compose -f docker-compose.vanilla.yml down -v
 
 # Restart containers with fresh volumes
-$ docker-compose -f docker-compose.vanilla.yml up -d
+$ docker-compose -f docker-compose.vanilla.yml up -d --build
 ```
+
+You will also need to go back through the intial setup, see the [Initial Setup](#initial-setup)
+section for more details.
 
 ## Using the Drupal Development Environment for an Exisiting Site
 
