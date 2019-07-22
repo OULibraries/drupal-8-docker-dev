@@ -9,7 +9,7 @@ services:
     env_file:
       - ./mysql/resources/mysql.env
     ports:
-      - "0.0.0.0:3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - ./mysql/resources/init:/docker-entrypoint-initdb.d
       - mysql-data:/var/lib/mysql
@@ -25,12 +25,7 @@ services:
       - mysql
     volumes:
         - html:/var/www/html
-        - ./${SITE}/core:/var/www/html/core
-        - ./${SITE}/modules:/var/www/html/modules
-        - ./${SITE}/profiles:/var/www/html/profiles
-        - ./${SITE}/themes:/var/www/html/themes
-        - ./${SITE}/sites:/var/www/html/sites
-        # - ./drupal/resources/settings.php:/var/www/html/sites/default/settings.php
+        - ./dev:/var/www/html/sites
     expose:
       - 9000
 
@@ -42,15 +37,10 @@ services:
       - mysql
       - drupal
     ports:
-      - "0.0.0.0:8080:80"
+      - "127.0.0.1:8080:80"
     volumes:
-      - html:/var/www/html:ro
-      - ./${SITE}/core:/var/www/html/core:ro
-      - ./${SITE}/modules:/var/www/html/modules:ro
-      - ./${SITE}/profiles:/var/www/html/profiles:ro
-      - ./${SITE}/themes:/var/www/html/themes:ro
-      - ./${SITE}/sites:/var/www/html/sites:ro
-      #- ./drupal/resources/settings.php:/var/www/html/sites/default/settings.php
+      - html:/var/www/html
+      - ./dev:/var/www/html/sites
       - ./nginx/resources/default.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:

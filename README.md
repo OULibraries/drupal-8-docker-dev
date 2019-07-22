@@ -21,7 +21,11 @@ database container, a Drupal 8 container and a NGINX web server container.
 * [Using the Development Environment](#using-the-development-environment)
   * [Which docker-compose.yml should I use?](#which-docker-compose.yml-should-i-use?)
   * [Using the Vanilla Drupal Development Environment](#using-the-vanilla-drupal-development-environment)
-  * [Using the Drupal Development Environment for an Exisiting Site](#using-the-drupal-development-environment-for-an-existing-site)
+  * [Using the Drupal Development Environment for an Existing Site](#using-the-drupal-development-environment-for-an-existing-site)
+  * [Accessing Drupal and MySQL Volumes](#accessing-drupal-and-mysql-volumes)
+  * [Stopping the Development Environment](#stopping-the-development-environment)
+  * [Interacting with the MySQL Container](#interacting-with-the-mysql-container)
+  * [Starting a Fresh Environment](#starting-a-fresh-environment)
 
 
 # Pre-Requisites
@@ -158,8 +162,7 @@ By default, the database dump will be read into the database defined by the
 `MYSQL_DATABASE` enviroment variable specificed in [mysql.env](mysql/resources/mysql.env#L2).
 
 The database dump will only be imported during a fresh deployment of the MySQL
-container. Please see [Starting a Fresh Environment](#starting-a-fresh-environment)
-for more information on how to build a fresh MySQL container.
+container.
 
 # Using the Development Environment
 
@@ -190,7 +193,7 @@ $ docker-compose -f docker-compose.vanilla.yml up -d --build
 This command will spin up a MySQL 8 database container, a Drupal 8 container and  
 an NGINX web server frontend container.
 
-Once completed, Drupal may be accessed at `http://localhost:8080/index.php`.  
+Once completed, Drupal may be accessed at `http://localhost:8080`.  
 The MySQL database will be available at `localhost:3306`.
 
 ### Initial Setup
@@ -227,20 +230,104 @@ time, there are a few initial setup steps the must be completed.
    the Bootstrap theme has become active an all of the third party modules are
    now enabled. You are now ready to use the Drupal environment.
 
-### Stopping the Development Environment
+## Using the Drupal Development Environment for an Existing Site
 
-The Drupal 8 Docker development cluster may be stopped via `docker-compose`.
+### Initial Setup
 
-```bash
-$ docker-compose -f docker-compose.vanilla.yml stop
-```
+The following list outline the process of importing an existing Drupal 8 site
+into the Drupal 8 Docker development environment. Steps 1-8 will only need to be 
+done during the initial deployment of the development environment. Once completed,
+the development environment may be stopped and restarted and the site changes will
+be persisted.
 
-Edits made to the Drupal site and changes made to the MySQL database will be 
-persisted across restarts of the Drupal 8 development cluster.
+1. Obtain a copy of your site(s). This should be the contents of the `sites` directory
+   in your Drupal 8 project.
+2. Copy the site contents in the `dev` directory. This directory will be mounted 
+   into the Drupal 8 instance at `/var/www/html/sites`. This directory needs to 
+   be readable by the `www-data` (UID: 33) user within the Drupal 8 container. This can be 
+   done by changing the ownership of the `dev` directory.
+   ```bash
+   $ chmod -R 33:33 ./dev
+   ```
+3. Obtain a SQL dump of your site's database. The dump file should be placed in
+   `./mysql/resources/init` and must have the extension `.sql` or `.sql.gz`.
+4. Update the `settings.php` file for your site. In particular, you will need to 
+   update the database connection options to match the MySQL database, user and 
+   password being used by the MySQL container. The values used by the container
+   may be found in [mysql.env](mysql/resources/mysql.env).The MySQL host should 
+   be changed to `mysql`.
+   ```php
+   # An example settings.php snippet using the default MySQL container credentials.
+   $databases['default']['default'] = array (
+      'database' => 'drupaldb',
+      'username' => 'drupaluser',
+      'password' => 'drupalpassword',
+      'prefix' => '',
+      'host' => 'mysql',
+      'port' => '3306',
+      'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
+      'driver' => 'mysql',
+      );
+   ```
+6. Add any additional third party modules required for your site to the Drupal
+   [composer.json](drupal/resources/composer.json#L6-L26). Make sure to also add 
+   a line to [enable_modules.sh](drupal/resources/enable_modules.sh) so that the
+   script will enable your module via Drush.
+5. Start up the Drupal 8 Docker development environment via `docker-compose`.
+   ```bash
+   $ docker-compose up -d --build
+   ```
+6. Wait for the MySQL DB to import and become available. It will take some time to
+   import your database from the SQL dump. During this time, the MySQL database
+   will not be available and Drupal will not be able to connect. You can determine
+   when the MySQL database is up and available by examining the logs of the MySQL
+   container via `docker logs`. You can tell that MySQL is ready to accept connections
+   when the log message `/usr/sbin/mysqld: ready for connections.` appears in the logs.
+   ```bash
+   # Get the ID of the MySQL container.
+   $ docker ps -qf "ancestor=drupal-8-docker-dev_mysql"
+   ab50798d19f6
 
-### Accessing Drupal and MySQL Volumes
+   # SQL dump still importing. MySQL unavailable.
+   $ docker logs ab50798d19f6
+   ...
+   /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/my_db_dump.sql
+   mysql: [Warning] Using a password on the command line interface can be insecure.
 
-In the vanilla Drupal development environment, the Drupal directory 
+   # MySQL ready for client connections.
+   $ docker logs ab50798d19f6
+   ...
+   /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/my_db_dump.sql
+   mysql: [Warning] Using a password on the command line interface can be insecure.
+
+
+   2019-07-22T18:49:58.746740Z 0 [System] [MY-010910] [Server] /usr/sbin/mysqld: Shutdown complete (mysqld 8.0.16)  MySQL Community Server - GPL.
+
+   MySQL init process done. Ready for start up.
+
+   2019-07-22T18:49:59.072256Z 0 [Warning] [MY-011070] [Server] 'Disabling symbolic links using --skip-symbolic-links (or equivalent) is the default. Consider not using this option as it' is deprecated and will be removed in a future release.
+   2019-07-22T18:49:59.072321Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.16) starting as process 1
+   2019-07-22T18:49:59.575815Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+   2019-07-22T18:49:59.585663Z 0 [Warning] [MY-011810] [Server] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
+   2019-07-22T18:49:59.600307Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.16'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  MySQL Community Server - GPL.
+   2019-07-22T18:49:59.695809Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Socket: '/var/run/mysqld/mysqlx.sock' bind-address: '::' port: 33060
+   ```
+8. Enable third party modules via the `enable_modules.sh` script.
+   ```bash
+   # Find the ID of the Drupal container.
+   $ docker ps -qf "ancestor=drupal-8-docker-dev_drupal"
+   0ac1284fca93
+
+   # Run enable_modules.sh within the Drupal container
+   $ docker exec 0ac1284fca93 ./enable_modules.sh
+   ```
+7. Access your Drupal 8 development instance at `http://localhost:8080` and your
+   database instance at `localhost:3306`. You should now be ready to use the 
+   Drupal 8 Docker development instance!
+
+## Accessing Drupal and MySQL Volumes
+
+In the Drupal development environment, the Drupal directory 
 `/var/www/html` and the MySQL data directory `/var/lib/mysql` are exposed and 
 persisted on the host via Docker named volumes. This allows the data in these
 directories to be persisted across restarts of the development environment.
@@ -260,7 +347,109 @@ $ docker volume inspect --format '{{ .Mountpoint }}' drupal-8-docker-dev_html
 /var/lib/docker/volumes/drupal-8-docker-dev_html/_data
 ```
 
-### Starting a Fresh Environment
+## Interacting with the MySQL Container
+
+Along with the NGINX webserver, the MySQL container is also exposed for local
+connections. 
+
+### Connect to the MySQL container via the `mysql` client.
+
+You may connect to the MySQL container via a local client on the 
+same host as your development environment using the host `127.0.0.1` and the 
+port `3306`.
+
+```bash 
+$ mysql -h 127.0.0.1 -P 3306 -u drupaluser --password=drupalpassword
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 90
+Server version: 8.0.16 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| drupaldb           |
+| information_schema |
++--------------------+
+2 rows in set (0.00 sec)
+```
+
+### Connect to MySQL via the `mysql` client within the MySQL container.
+
+It is also possible to connect to the database using the MySQL client within
+the MySQL container if no local client is available.
+```bash
+# Get the ID of the MySQL container.
+$ docker ps -qf "ancestor=drupal-8-docker-dev_mysql"
+ab50798d19f6
+
+# Start the MySQL client within the container.
+$ docker exec -it ab50798d19f6 mysql --user=drupaluser --password=drupalpassword
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 91
+Server version: 8.0.16 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| drupaldb           |
+| information_schema |
++--------------------+
+2 rows in set (0.01 sec)
+```
+
+### Dump a database within the MySQL container.
+
+The MySQL container also contains the `mysqldump` binary, which may be used to 
+easily dump databases within the MySQL container.
+
+```bash
+# Get the ID of the MySQL container.
+$ docker ps -qf "ancestor=drupal-8-docker-dev_mysql"
+ab50798d19f6
+
+# Dump the database to the local host file drupaldb_dump.sql.
+$ docker exec -i ab50798d19f6 /usr/bin/mysqldump --user=drupaluser --password=drupalpassword drupaldb > drupaldb_dump.sql
+
+# Dump the database to the local host file drupaldb_dump.sql and print to stdout.
+$ docker exec -i ab50798d19f6 /usr/bin/mysqldump --user=drupaluser --password=drupalpassword drupaldb | tee drupaldb_dump.sql
+```
+
+## Stopping the Development Environment
+
+The Drupal 8 Docker development cluster may be stopped via `docker-compose`.
+
+```bash
+# Stopping the cluster.
+$ docker-compose stop
+
+# Stopping a vanilla cluster.
+$ docker-compose -f docker-compose.vanilla.yml stop
+```
+
+Edits made to the Drupal site and changes made to the MySQL database will be 
+persisted across restarts of the Drupal 8 development cluster.
+
+## Starting a Fresh Environment
 
 If you wish to start a fresh Drupal 8 Docker development environment, execute
 the following commands to remove the persistent volumes for the containers and 
@@ -268,6 +457,15 @@ restart them with new volumes. Be sure to copy data you wish to save before
 removing the persistent volumes.
 
 ```bash 
+# Standard Cluster
+# Stop all containers and delete persistent volumes.
+$ docker-compose down -v
+
+# Restart containers with fresh volumes
+$ docker-compose up -d --build
+
+
+# Vanilla Cluster
 # Stop all containers and delete persistent volumes.
 $ docker-compose -f docker-compose.vanilla.yml down -v
 
@@ -275,10 +473,5 @@ $ docker-compose -f docker-compose.vanilla.yml down -v
 $ docker-compose -f docker-compose.vanilla.yml up -d --build
 ```
 
-You will also need to go back through the intial setup, see the [Initial Setup](#initial-setup)
-section for more details.
-
-## Using the Drupal Development Environment for an Exisiting Site
-
-TODO
-
+Keep in mind that you will need to go back through the intitial setup following
+the deployment of a fresh environment.
