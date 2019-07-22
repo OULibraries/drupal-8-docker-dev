@@ -21,7 +21,7 @@ database container, a Drupal 8 container and a NGINX web server container.
 * [Using the Development Environment](#using-the-development-environment)
   * [Which docker-compose.yml should I use?](#which-docker-compose.yml-should-i-use?)
   * [Using the Vanilla Drupal Development Environment](#using-the-vanilla-drupal-development-environment)
-  * [Using the Drupal Development Environment for an Existing Site](#using-the-drupal-development-environment-for-an-existing-site)
+  * [Using the Drupal Development Environment with an Existing Site](#using-the-drupal-development-environment-with-an-existing-site)
   * [Accessing Drupal and MySQL Volumes](#accessing-drupal-and-mysql-volumes)
   * [Stopping the Development Environment](#stopping-the-development-environment)
   * [Interacting with the MySQL Container](#interacting-with-the-mysql-container)
@@ -230,7 +230,7 @@ time, there are a few initial setup steps the must be completed.
    the Bootstrap theme has become active an all of the third party modules are
    now enabled. You are now ready to use the Drupal environment.
 
-## Using the Drupal Development Environment for an Existing Site
+## Using the Drupal Development Environment with an Existing Site
 
 ### Initial Setup
 
