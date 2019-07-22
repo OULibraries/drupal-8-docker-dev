@@ -254,7 +254,7 @@ be persisted.
 4. Update the `settings.php` file for your site. In particular, you will need to 
    update the database connection options to match the MySQL database, user and 
    password being used by the MySQL container. The values used by the container
-   may be found in [mysql.env](mysql/resources/mysql.env).The MySQL host should 
+   may be found in [mysql.env](mysql/resources/mysql.env). The MySQL host should 
    be changed to `mysql`.
    ```php
    # An example settings.php snippet using the default MySQL container credentials.
