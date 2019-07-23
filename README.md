@@ -26,6 +26,7 @@ database container, a Drupal 8 container and a NGINX web server container.
   * [Stopping the Development Environment](#stopping-the-development-environment)
   * [Interacting with the MySQL Container](#interacting-with-the-mysql-container)
   * [Starting a Fresh Environment](#starting-a-fresh-environment)
+* [Example Site](#example-site)
 
 
 # Pre-Requisites
@@ -475,3 +476,9 @@ $ docker-compose -f docker-compose.vanilla.yml up -d --build
 
 Keep in mind that you will need to go back through the intitial setup following
 the deployment of a fresh environment.
+
+# Example Site
+
+Please see the [drupal-8-umami-example repo](https://github.com/OULibraries/drupal-8-umami-example)
+for an example Drupal 8 site that can be imported into the Drupal 8 Docker development environment
+for testing.
