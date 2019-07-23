@@ -247,7 +247,7 @@ be persisted.
    be readable by the `www-data` (UID: 33) user within the Drupal 8 container. This can be 
    done by changing the ownership of the `dev` directory.
    ```bash
-   $ chmod -R 33:33 ./dev
+   $ chown -R 33:33 ./dev
    ```
 3. Obtain a SQL dump of your site's database. The dump file should be placed in
    `./mysql/resources/init` and must have the extension `.sql` or `.sql.gz`.
