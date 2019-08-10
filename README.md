@@ -348,6 +348,14 @@ $ docker volume inspect --format '{{ .Mountpoint }}' drupal-8-docker-dev_html
 /var/lib/docker/volumes/drupal-8-docker-dev_html/_data
 ```
 
+Note: If you are running the Drupal 8 Docker development environment on Mac or
+Windows via Docker Desktop, the mountpoint paths will not exist on your host
+system. This is because Docker Desktop actually runs Docker within a small VM.
+The mountpoint paths Docker returns will be paths within this VM. If you wish to
+copy data to and from the Drupal or MySQL containers on these operating systems,
+consider using [docker cp](https://docs.docker.com/engine/reference/commandline/cp/)
+instead.
+
 ## Interacting with the MySQL Container
 
 Along with the NGINX webserver, the MySQL container is also exposed for local
