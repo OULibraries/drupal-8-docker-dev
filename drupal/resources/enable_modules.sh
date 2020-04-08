@@ -25,3 +25,13 @@ d en s3fs_cors
 d en stage_file_proxy
 d en twig_tweak
 d en token
+d en layout_builder
+d en layout_discovery
+d en media
+d en media_library
+d en responsive_image
+d en syslog
+d en field_layout
+d en devel
+d en datetime_range
+d en telephone
