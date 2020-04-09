@@ -22,7 +22,8 @@
        "drupal/stage_file_proxy":"^1.9",
        "drupal/twig_tweak":"^2.4",
        "drupal/token":"^1.5",
-       "wikimedia/composer-merge-plugin":"^1.4"
+       "wikimedia/composer-merge-plugin":"^1.4",
+       "drupal/core-vendor-hardening": "^8.8"
     },
     "replace":{
        "drupal/core":"^8.7"
