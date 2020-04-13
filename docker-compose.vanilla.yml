@@ -2,7 +2,7 @@
 
 version: '3'
 
-services: 
+services:
   mysql:
     build: ./mysql
     env_file:
@@ -22,7 +22,7 @@ services:
     depends_on:
       - mysql
     volumes:
-        - html:/var/www/html
+      - html:/var/www/html
     expose:
       - 9000
 
@@ -42,4 +42,4 @@ services:
 volumes:
   mysql-data:
   html:
-  
+
