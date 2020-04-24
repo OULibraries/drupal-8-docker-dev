@@ -21,7 +21,9 @@
         "drupal/pathauto": "^1.4",
         "drupal/redirect": "^1.4",
         "drupal/token": "^1.5",
-        "drupal/twig_tweak": "^2.4"
+        "drupal/twig_tweak": "^2.4",
+        "webflo/drupal-finder": "^1.0.0",
+        "webmozart/path-util": "^2.3"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
@@ -63,11 +65,15 @@
         }
     },
     "autoload": {
-        "psr-4": {
-            "Drupal\\Core\\Composer\\": "core/lib/Drupal/Core/Composer"
-        }
+        "classmap": [
+            "/scripts/composer/ScriptHandler.php"
+        ]
     },
     "scripts": {
+        "pre-install-cmd": "DrupalProject\\composer\\ScriptHandler::checkComposerVersion",
+        "pre-update-cmd": "DrupalProject\\composer\\ScriptHandler::checkComposerVersion",
+        "post-install-cmd": "DrupalProject\\composer\\ScriptHandler::createRequiredFiles",
+        "post-update-cmd": "DrupalProject\\composer\\ScriptHandler::createRequiredFiles",
         "pre-autoload-dump": "Drupal\\Core\\Composer\\Composer::preAutoloadDump",
         "post-autoload-dump": "Drupal\\Core\\Composer\\Composer::ensureHtaccess",
         "post-package-install": "Drupal\\Core\\Composer\\Composer::vendorTestCodeCleanup",

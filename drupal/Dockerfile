@@ -27,6 +27,8 @@ COPY ./resources/composer.json /var/www/html/composer.json
 # Drop in script to enable all modules.
 COPY ./resources/enable_modules.sh /var/www/html/enable_modules.sh
 
+COPY ./resources/scripts/ /scripts/
+
 # Install modules and allow enable_modules.sh to be executed later.
 RUN COMPOSER_MEMORY_LIMIT=-1 composer update \
   && chmod a+x /var/www/html/enable_modules.sh
