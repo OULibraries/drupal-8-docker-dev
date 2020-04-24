@@ -12,6 +12,7 @@
     "drupal/backup_migrate": "^4.0",
     "drupal/config_filter": "^1.4",
     "drupal/config_split": "^1.4",
+    "drupal/core": "^8.8.5",
     "drupal/devel": "^2.1",
     "drupal/entity_browser": "^2.2",
     "drupal/google_analytics": "^2.4",
@@ -22,14 +23,13 @@
     "drupal/stage_file_proxy": "^1.9",
     "drupal/twig_tweak": "^2.4",
     "drupal/token": "^1.5",
-    "wikimedia/composer-merge-plugin": "^1.4"
-  },
-  "replace": {
-    "drupal/core": "^8.7"
+    "wikimedia/composer-merge-plugin": "^1.4",
+    "drupal/core-vendor-hardening": "^8.8"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
   "config": {
+    "sort-packages": true,
     "preferred-install": "dist",
     "autoloader-suffix": "Drupal8"
   },
