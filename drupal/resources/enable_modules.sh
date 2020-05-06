@@ -29,6 +29,7 @@ d en layout_builder
 d en layout_discovery
 d en media
 d en media_library
+d en paragraphs
 d en responsive_image
 d en syslog
 d en field_layout
