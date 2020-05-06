@@ -18,6 +18,7 @@
         "drupal/devel": "^2.1",
         "drupal/entity_browser": "^2.2",
         "drupal/google_analytics": "^2.4",
+        "drupal/paragraphs": "^1.11",
         "drupal/pathauto": "^1.4",
         "drupal/redirect": "^1.4",
         "drupal/token": "^1.5",
